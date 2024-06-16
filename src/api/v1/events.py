@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends
+
+from src.core.config import settings
 from src.database.base import DBClientABC
-from src.embedding_merger import EmbeddingMerger, EmbeddingMergerABC
+from src.embedding_merger import EmbeddingMergerABC
 from src.models.video_properties import VideoProperties
 from src.schemas.video_embedding import VideoEmbeddingSchema
 
@@ -24,11 +26,16 @@ async def send_bookmarked_event(
             external_id=video.video_id,
             link=video.video_url,
             text=video.text,
+            valid=video.valid,
+            description=video.description
         ),
         collection_name=video.collection
     )
 
-    existing_embedding = embedding_merger.find_embedding(video.video_id)
+    if video.collection == settings.QDRANT_COLLECTION_NAMES["TAGS_COLLECTION"]:
+        return
+
+    existing_embedding = embedding_merger.find_embedding(video.collection, video.embedding, video.video_id)
 
     if existing_embedding:
         merged_embedding = embedding_merger.merge_embeddings(existing_embedding)
@@ -38,6 +45,8 @@ async def send_bookmarked_event(
                 external_id=video.video_id,
                 link=video.video_url,
                 text=video.text,
+                valid=video.valid,
+                description=video.description
             ),
-            collection_name=embedding_merger.merged_collection_name
+            collection_name=settings.MERGED_COLLECTION_NAME
         )

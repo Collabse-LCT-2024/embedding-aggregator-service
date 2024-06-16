@@ -8,13 +8,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.api.v1 import events
 from src.cli import cli
 from src.core.config import settings
-from src.core.tracing import configure_tracing
 from src.dependencies.main import setup_dependencies
 
 
 def create_app() -> FastAPI:
-    if settings.enable_tracer:
-        configure_tracing()
     app = FastAPI(
         title=settings.project_name,
         description=settings.description,
